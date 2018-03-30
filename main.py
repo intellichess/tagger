@@ -96,8 +96,20 @@ def count_doubled_pawns(board, color=None):
     if not isinstance(board, chess.Board):
         raise TypeError(board, " is not a ", type(chess.Board))
 
+    m = fen_to_matrix(board)
 
-    return 1
+    white_doubled = 0
+    black_doubled = 0
+    for rank in range(len(m)):
+        ctr = collections.Counter()
+        c = column(m, rank)
+        ctr.update(c)
+        if ctr["p"] == 2:
+            black_doubled += 1
+        if ctr["P"] == 2:
+            white_doubled += 1
+
+    return white_doubled - black_doubled
 
 
 def evaluate(board):
@@ -160,6 +172,7 @@ def main():
     for move in g1.main_line():
         print(move, evaluate(board))
         print("num iso pawns: ", count_isolated_pawns(board))
+        print("num doubled pawns: ", count_doubled_pawns(board))
         board.push(move)
         print(board, "\n")
         input("press enter to continue...\n")
