@@ -83,27 +83,41 @@ def count_isolated_pawns(board):
 
 def count_blocked_pawns(board):
     """
-
+    Returns the count of blocked pawns on the board.
     :param board:
-    :return:
+    :return: count of blocked pawns on the board
     """
+    if not isinstance(board, chess.Board):
+        raise TypeError(board, " is not a ", type(chess.Board))
+
     m = fen_to_matrix(board)
     white_blocked = 0
     black_blocked = 0
 
     for rank in range(len(m)):
         c = column(m, rank)
-        print(c)
-        for i in range(len(c)):
-            if c[i] == "p" and c[i + 1] != 0:
+        # print(c)
+        for i in range(1, len(c) - 1):
+            piece_c = str(c[i])  # current piece
+            piece_n = str(c[i + 1]) if c[i + 1] is not None else None  # next piece
+            piece_p = str(c[i - 1]) if c[i - 1] is not None else None  # previous piece
+            if piece_c == "p" and piece_n != "0":
+                print("black pawn blocked ", c)
+                print("c[i]: ", c[i])
+                print("c[i + 1]: ", c[i+1])
                 black_blocked += 1
-            elif c[i] == "P" and c[i - 1] != 0:
+            elif piece_c == "P" and piece_p != "0":
                 white_blocked += 1
 
     return white_blocked - black_blocked
 
 
-def count_doubled_pawns(board, color=None):
+def count_doubled_pawns(board):
+    """
+    Returns the count of doubled pawns on the board. Does not count tripled or quadrupled.
+    :param board:
+    :return: count of doubled pawns in board
+    """
     if not isinstance(board, chess.Board):
         raise TypeError(board, " is not a ", type(chess.Board))
 
