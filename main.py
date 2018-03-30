@@ -81,15 +81,26 @@ def count_isolated_pawns(board):
     return white_iso - black_iso
 
 
-def count_singled_pawns(board, color=None):
+def count_blocked_pawns(board):
     """
 
     :param board:
-    :param color:
     :return:
     """
+    m = fen_to_matrix(board)
+    white_blocked = 0
+    black_blocked = 0
 
-    return 1
+    for rank in range(len(m)):
+        c = column(m, rank)
+        print(c)
+        for i in range(len(c)):
+            if c[i] == "p" and c[i + 1] != 0:
+                black_blocked += 1
+            elif c[i] == "P" and c[i - 1] != 0:
+                white_blocked += 1
+
+    return white_blocked - black_blocked
 
 
 def count_doubled_pawns(board, color=None):
@@ -140,7 +151,7 @@ def evaluate(board):
         + 5 * (piece_counts["R"] - piece_counts["r"]) \
         + 3 * (piece_counts["B"] - piece_counts["b"] + piece_counts["N"] - piece_counts["n"]) \
         + (piece_counts["P"] - piece_counts["p"]) \
-        - 0.5 * (count_doubled_pawns(board) + count_singled_pawns(board) + count_isolated_pawns(board)) \
+        - 0.5 * (count_doubled_pawns(board) + count_blocked_pawns(board) + count_isolated_pawns(board)) \
         + 0.1 * (board.legal_moves.count())
 
     """
@@ -173,6 +184,7 @@ def main():
         print(move, evaluate(board))
         print("num iso pawns: ", count_isolated_pawns(board))
         print("num doubled pawns: ", count_doubled_pawns(board))
+        print("num blocked pawns: ", count_blocked_pawns(board))
         board.push(move)
         print(board, "\n")
         input("press enter to continue...\n")
