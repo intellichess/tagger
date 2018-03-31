@@ -168,21 +168,6 @@ def evaluate(board):
         - 0.5 * (count_doubled_pawns(board) + count_blocked_pawns(board) + count_isolated_pawns(board)) \
         + 0.1 * (board.legal_moves.count())
 
-    """
-    piece_values = {
-        'P': 1, "p": -1,
-        'N': 3, "n": -3,
-        'B': 3, "b": -3,
-        'R': 5, "r": -5,
-        'Q': 9, "q": -9,
-        'K': 200, "k": -200
-    }
-
-    e = 0
-    for x in board.board_fen():
-        if x.isalpha():
-            e += piece_values[x]
-    """
     return v
 
 
@@ -200,7 +185,7 @@ def main():
         print("num doubled pawns: ", count_doubled_pawns(board))
         print("num blocked pawns: ", count_blocked_pawns(board))
         board.push(move)
-        print(board, "\n")
+        print(board, "\n", evaluate(board))
         input("press enter to continue...\n")
 
 

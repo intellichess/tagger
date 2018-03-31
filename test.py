@@ -88,7 +88,8 @@ def count_isolated_pawns(board):
 def main():
     b = chess.Board(fen='r3k2r/pp1n2p1/2p2q1p/2b1p3/4B1b1/2PP1N2/PP3PPP/R1BQ1RK1 w KQkq - 0 1')
     print(b)
-    print(count_isolated_pawns(b))
+    # print(count_isolated_pawns(b))
+    print(b.legal_moves)
 
 
 if __name__ == "__main__":
