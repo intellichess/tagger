@@ -181,12 +181,14 @@ def main():
 
     for move in g1.main_line():
         print(move, evaluate(board))
-        print("num iso pawns: ", count_isolated_pawns(board))
-        print("num doubled pawns: ", count_doubled_pawns(board))
-        print("num blocked pawns: ", count_blocked_pawns(board))
+        # print("num iso pawns: ", count_isolated_pawns(board))
+        # print("num doubled pawns: ", count_doubled_pawns(board))
+        # print("num blocked pawns: ", count_blocked_pawns(board))
         board.push(move)
-        print(board, "\n", evaluate(board))
-        input("press enter to continue...\n")
+        # print(board, "\n", evaluate(board))
+        # input("press enter to continue...\n")
+
+    print(evaluate(board))
 
 
 if __name__ == "__main__":
