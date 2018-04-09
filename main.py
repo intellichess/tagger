@@ -1,7 +1,7 @@
-import collections
-
 import chess
 import chess.pgn as c_pgn
+import collections
+import pandas as pd
 
 
 def column(matrix, i):
@@ -172,23 +172,31 @@ def evaluate(board):
 
 
 def main():
-    morphy = open("data/Morphy.pgn", encoding="utf-8-sig")
-    g1 = c_pgn.read_game(morphy)
-    print(g1.headers)
+    morphy = open("data/aggressive/Morphy.pgn", encoding="utf-8-sig")
 
-    board = g1.board()
-    print(board, "\n")
+    headers = [
+        "Event",
+        "Site",
+        "Date",
+        "Round",
+        "White",
+        "Black",
+        "Result",
+        "WhiteElo",
+        "BlackElo",
+        "ECO",
+        "Aggro"
+    ]
+    df = pd.DataFrame(columns=headers)
 
-    for move in g1.main_line():
-        print(move, evaluate(board))
-        # print("num iso pawns: ", count_isolated_pawns(board))
-        # print("num doubled pawns: ", count_doubled_pawns(board))
-        # print("num blocked pawns: ", count_blocked_pawns(board))
-        board.push(move)
-        # print(board, "\n", evaluate(board))
-        # input("press enter to continue...\n")
+    g = c_pgn.read_game(morphy)
+    while g is not None:
+        d = dict(g.headers)
+        d["Aggro"] = 1
+        df = df.append(d, ignore_index=True)
+        g = c_pgn.read_game(morphy)
 
-    print(evaluate(board))
+    print(df.head())
 
 
 if __name__ == "__main__":
