@@ -239,7 +239,17 @@ def count_material_threatened(board, squares_threatened, color):
         square = chess.square(file, rank)
         cur_piece = board.piece_at(square)
         if cur_piece is not None and cur_piece.color is not true_color:
-            pieces_threatened += 1
+            cur_piece_type = cur_piece.piece_type
+            if cur_piece_type == 1:
+                pieces_threatened += 1
+            elif cur_piece_type == 2:
+                pieces_threatened += 3
+            elif cur_piece_type == 3:
+                pieces_threatened += 3
+            elif cur_piece_type == 4:
+                pieces_threatened += 5
+            elif cur_piece_type == 5:
+                pieces_threatened += 9
     return pieces_threatened
 
 
@@ -315,6 +325,8 @@ def simulate_game(game, color):
     print(material_threatened)
     print("# of moves made: ")
     print(number_of_moves)
+
+    return number_of_moves, material_threatened, number_of_gambits, number_of_checks
 
 
 def main():
