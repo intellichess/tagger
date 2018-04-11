@@ -243,21 +243,33 @@ def count_material_threatened(board, squares_threatened, color):
     return pieces_threatened
 
 
-def count_gambits_made(board, turn):
+def is_gambit_made(board, turn):
     """
     Count the number of gambits made
-    :param board: a
-    :param turn: a
+    :param board: board instance
+    :param turn: to make sure move stack isn't null
     :return: a
     """
     if turn >= 3:
         cur_move = board.pop()
         prev_move = board.pop()
         prev_prev_move = board.pop()
-        # if prev_move consumes
+
+        # Getting the spot the piece moved to on the player's previous turn
         board.push(prev_prev_move)
+        prev_prev_square = get_new_square(prev_prev_move)
+
+        # Getting the spot the piece moved to on the opposing player's last turn
         board.push(prev_move)
+        prev_square = get_new_square(prev_move)
+
+        # Getting the spot the piece moved to on the player's current turn
         board.push(cur_move)
+        cur_square = get_new_square(cur_move)
+
+        # This means that on the player's last turn, the player moved a piece, then the opposing player
+        # captured that piece, and the player then captured that piece
+        return True if (prev_prev_square == prev_square and prev_square == cur_square) else False
 
 
 def simulate_game(game, color):
@@ -274,7 +286,6 @@ def simulate_game(game, color):
     turn = 1
 
     board = game.board()
-    print(board.move_stack)
     # looping through all the moves in the game
     for move in game.main_line():
         # simulating the move
@@ -288,17 +299,22 @@ def simulate_game(game, color):
             if board.is_into_check(cur_move):
                 number_of_checks += 1
             pieces_threatened = board.attacks(cur_square)  # get all pieces threatened by the move
-            count_gambits_made(board, turn)
-
+            # Checking if a gambit was made
+            if is_gambit_made(board, turn):
+                number_of_gambits += 1
             # count the number of enemy pieces threatened by the move
             material_threatened += count_material_threatened(board, pieces_threatened, color)
             number_of_moves += 1
         turn += 1
 
+    print("# of gambits made: ")
+    print(number_of_gambits)
+    print("# of checks made: ")
     print(number_of_checks)
+    print("# of material threatened: ")
     print(material_threatened)
+    print("# of moves made: ")
     print(number_of_moves)
-    print(turn)
 
 
 def main():
