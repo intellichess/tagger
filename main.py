@@ -171,32 +171,141 @@ def evaluate(board):
     return v
 
 
+def get_player_team(filename, game):
+    """
+    Returns the player's team color, 1 for white, 0 for black
+    :param filename: the pgn file named after the player
+    :param game: the chess game
+    :return:
+    """
+    player = ""
+    sep = "/"
+    if filename.rfind(sep) > 0:
+        player = filename[filename.rindex(sep)+1:-4]
+    else:
+        player = filename[0:-4]
+
+    return "White" if player in game.headers["White"] else "Black"
+
+
+def get_new_square(move):
+    """
+    Gets the square from the move
+    :param move: the spot that the piece just moved to
+    :return: a square instance of the board
+    """
+    files = "a,b,c,d,e,f,g,h".split(",")
+    move = str(move)
+    file = move[2:3]
+    rank = move[3:4]
+
+    file = files.index(file)
+    rank = int(rank) - 1
+
+    return chess.square(file, rank)
+
+
+def get_old_square(move):
+    """
+    Gets the square from the old spot
+    :param move: the spot that the piece was at
+    :return:  square instance of the board
+    """
+    files = "a,b,c,d,e,f,g,h".split(",")
+    move = str(move)
+    file = move[0:1]
+    rank = move[1:2]
+
+    file = files.index(file)
+    rank = int(rank) - 1
+
+    return chess.square(file, rank)
+
+
+def count_material_threatened(board, squares_threatened, color):
+    """
+    Gets the material threatened per move
+    :param board: board instance
+    :param squares_threatened: the spots that the piece can go to
+    :param color: piece color
+    :return: material threatened by the move
+    """
+
+    true_color = chess.WHITE if color == "White" else chess.BLACK
+    pieces_threatened = 0
+    for piece in squares_threatened:
+        file = chess.square_file(piece)
+        rank = chess.square_rank(piece)
+        square = chess.square(file, rank)
+        cur_piece = board.piece_at(square)
+        if cur_piece is not None and cur_piece.color is not true_color:
+            pieces_threatened += 1
+    return pieces_threatened
+
+
+def count_gambits_made(board, turn):
+    """
+    Count the number of gambits made
+    :param board: a
+    :param turn: a
+    :return: a
+    """
+    if turn >= 3:
+        cur_move = board.pop()
+        prev_move = board.pop()
+        prev_prev_move = board.pop()
+        # if prev_move consumes
+        board.push(prev_prev_move)
+        board.push(prev_move)
+        board.push(cur_move)
+
+
+def simulate_game(game, color):
+    """
+    Simulates the game to find material threatened, gambits made, checks made, and moves made
+    :param game:
+    :param color:
+    :return:
+    """
+    number_of_moves = 0
+    material_threatened = 0
+    number_of_gambits = 0
+    number_of_checks = 0
+    turn = 1
+
+    board = game.board()
+    print(board.move_stack)
+    # looping through all the moves in the game
+    for move in game.main_line():
+        # simulating the move
+        board.push(move)
+        # if it's the player's turn
+        if (turn % 2 == 1 and color == "White") or (turn % 2 == 0 and color == "Black"):
+            prev_square = get_old_square(move)  # old spot before the current piece moved
+            cur_square = get_new_square(move)  # new spot after the current piece moved
+            # checking if the move put the enemy's king into check
+            cur_move = chess.Move(prev_square, cur_square)
+            if board.is_into_check(cur_move):
+                number_of_checks += 1
+            pieces_threatened = board.attacks(cur_square)  # get all pieces threatened by the move
+            count_gambits_made(board, turn)
+
+            # count the number of enemy pieces threatened by the move
+            material_threatened += count_material_threatened(board, pieces_threatened, color)
+            number_of_moves += 1
+        turn += 1
+
+    print(number_of_checks)
+    print(material_threatened)
+    print(number_of_moves)
+    print(turn)
+
+
 def main():
     morphy = open("data/aggressive/Morphy.pgn", encoding="utf-8-sig")
-
-    headers = [
-        "Event",
-        "Site",
-        "Date",
-        "Round",
-        "White",
-        "Black",
-        "Result",
-        "WhiteElo",
-        "BlackElo",
-        "ECO",
-        "Aggro"
-    ]
-    df = pd.DataFrame(columns=headers)
-
-    g = c_pgn.read_game(morphy)
-    while g is not None:
-        d = dict(g.headers)
-        d["Aggro"] = 1
-        df = df.append(d, ignore_index=True)
-        g = c_pgn.read_game(morphy)
-
-    print(df.head())
+    game = c_pgn.read_game(morphy)
+    color = get_player_team("data/aggressive/Morphy.pgn", game)
+    simulate_game(game, color)
 
 
 if __name__ == "__main__":
