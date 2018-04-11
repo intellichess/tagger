@@ -1,6 +1,9 @@
+from os import listdir
+
 import chess
 import chess.pgn as c_pgn
 import collections
+import numpy as np
 import pandas as pd
 
 
@@ -102,9 +105,6 @@ def count_blocked_pawns(board):
             piece_n = str(c[i + 1]) if c[i + 1] is not None else None  # next piece
             piece_p = str(c[i - 1]) if c[i - 1] is not None else None  # previous piece
             if piece_c == "p" and piece_n != "0":
-                print("black pawn blocked ", c)
-                print("c[i]: ", c[i])
-                print("c[i + 1]: ", c[i+1])
                 black_blocked += 1
             elif piece_c == "P" and piece_p != "0":
                 white_blocked += 1
@@ -173,15 +173,18 @@ def evaluate(board):
 
 def get_player_team(filename, game):
     """
-    Returns the player's team color, 1 for white, 0 for black
+    Returns the player's team color
     :param filename: the pgn file named after the player
     :param game: the chess game
     :return:
     """
+    filename = ''.join(i for i in filename if not i.isdigit())  # sometimes multiple files will be
+    # for the same player, e.g. Alekhine and Alekhine1, so we want to avoid numbers in our player names
+
     player = ""
     sep = "/"
     if filename.rfind(sep) > 0:
-        player = filename[filename.rindex(sep)+1:-4]
+        player = filename[filename.rindex(sep) + 1:-4]
     else:
         player = filename[0:-4]
 
@@ -211,7 +214,7 @@ def get_old_square(move):
     :param move: the spot that the piece was at
     :return:  square instance of the board
     """
-    files = "a,b,c,d,e,f,g,h".split(",")
+    files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
     move = str(move)
     file = move[0:1]
     rank = move[1:2]
@@ -240,15 +243,13 @@ def count_material_threatened(board, squares_threatened, color):
         cur_piece = board.piece_at(square)
         if cur_piece is not None and cur_piece.color is not true_color:
             cur_piece_type = cur_piece.piece_type
-            if cur_piece_type == 1:
+            if cur_piece_type == chess.PAWN:  # pawn
                 pieces_threatened += 1
-            elif cur_piece_type == 2:
+            elif cur_piece_type == chess.KNIGHT or cur_piece_type == chess.BISHOP:
                 pieces_threatened += 3
-            elif cur_piece_type == 3:
-                pieces_threatened += 3
-            elif cur_piece_type == 4:
+            elif cur_piece_type == chess.ROOK:
                 pieces_threatened += 5
-            elif cur_piece_type == 5:
+            elif cur_piece_type == chess.QUEEN:
                 pieces_threatened += 9
     return pieces_threatened
 
@@ -293,6 +294,7 @@ def simulate_game(game, color):
     material_threatened = 0
     number_of_gambits = 0
     number_of_checks = 0
+    sum_board_eval = 0
     turn = 1
 
     board = game.board()
@@ -315,25 +317,99 @@ def simulate_game(game, color):
             # count the number of enemy pieces threatened by the move
             material_threatened += count_material_threatened(board, pieces_threatened, color)
             number_of_moves += 1
+        sum_board_eval += evaluate(board)
         turn += 1
 
-    print("# of gambits made: ")
-    print(number_of_gambits)
-    print("# of checks made: ")
-    print(number_of_checks)
-    print("# of material threatened: ")
-    print(material_threatened)
-    print("# of moves made: ")
-    print(number_of_moves)
+    stats = {
+        "Move Count": number_of_moves,
+        "Average Material Threatened": material_threatened / number_of_moves if number_of_moves != 0 else 0,
+        "Gambit Count": number_of_gambits,
+        "Check Count": number_of_checks,
+        "Average Board Evaluation": sum_board_eval / number_of_moves if number_of_moves != 0 else 0
+    }
 
-    return number_of_moves, material_threatened, number_of_gambits, number_of_checks
+    return stats
+
+
+def read_games(file):
+    headers = [
+        "Event", "Site", "Date", "Round", "White", "Black", "Result", "BlackElo", "WhiteElo", "ECO",
+        "Move Count", "Average Material Threatened", "Gambit Count", "Check Count", "Average Board Evaluation"
+    ]
+    df = pd.DataFrame(columns=headers)
+
+    with open(file) as pgn_file:
+        i = 1
+        while True:
+            print(file, " Game ", i)
+            game = c_pgn.read_game(pgn_file)
+            if game is None:
+                break
+            color = get_player_team(file, game)
+            stats = simulate_game(game, color)
+            print(stats)
+            d = {**dict(game.headers), **stats}
+            df = df.append(d, ignore_index=True)
+            i += 1
+
+    return df
+
+
+def process_aggro():
+    aggro = pd.DataFrame()
+    for f in listdir("./data/aggressive"):
+        # print(read_games("data/aggressive/Morphy.pgn"))
+        f = "./data/aggressive/" + str(f)
+        aggro = aggro.append(read_games(f))
+
+    # print(aggro.head())
+    # print(aggro.shape)
+    # print(np.mean(aggro["Average Material Threatened"]))
+    # aggro.to_csv("aggressive.csv")
+    aggro = aggro[aggro["Average Material Threatened"] != 0]
+    return aggro
+
+
+def process_defen():
+    defen = pd.DataFrame()
+    for f in listdir("./data/defensive"):
+        f = "./data/defensive/" + str(f)
+        defen = defen.append(read_games(f))
+
+    # print(defen.head())
+    # print(defen.shape)
+    # print(np.mean(defen["Average Material Threatened"]))
+    # defen.to_csv("defensive.csv")
+    defen = defen[defen["Average Material Threatened"] != 0]
+    return defen
+
+
+def update_csvs():
+    aggro = process_aggro()
+    defen = process_defen()
+    print("AGGRESSIVE:", aggro.shape)
+    print("Avg Mat Threat", np.mean(aggro["Average Material Threatened"]))
+    print("Avg Move Count", np.mean(aggro["Move Count"]))
+    print("Avg Gambit Count", np.mean(aggro["Gambit Count"]))
+    print("Avg Check Count", np.mean(aggro["Check Count"]))
+    print("Avg Avg Board Eval", np.mean(aggro["Average Board Evaluation"]))
+
+    print("DEFENSIVE:", defen.shape)
+    print("Avg Mat Threat", np.mean(defen["Average Material Threatened"]))
+    print("Avg Move Count", np.mean(defen["Move Count"]))
+    print("Avg Gambit Count", np.mean(defen["Gambit Count"]))
+    print("Avg Check Count", np.mean(defen["Check Count"]))
+    print("Avg Avg Board Eval", np.mean(defen["Average Board Evaluation"]))
+
+    aggro["Aggressive"] = 1
+    defen["Aggressive"] = 0
+
+    aggro.to_csv("aggressive.csv")
+    defen.to_csv("defensive.csv")
 
 
 def main():
-    morphy = open("data/aggressive/Morphy.pgn", encoding="utf-8-sig")
-    game = c_pgn.read_game(morphy)
-    color = get_player_team("data/aggressive/Morphy.pgn", game)
-    simulate_game(game, color)
+    update_csvs()
 
 
 if __name__ == "__main__":

@@ -86,10 +86,12 @@ def count_isolated_pawns(board):
 
 
 def main():
-    b = chess.Board(fen='r3k2r/pp1n2p1/2p2q1p/2b1p3/4B1b1/2PP1N2/PP3PPP/R1BQ1RK1 w KQkq - 0 1')
-    print(b)
-    # print(count_isolated_pawns(b))
-    print(b.legal_moves)
+    # b = chess.Board(fen='r3k2r/pp1n2p1/2p2q1p/2b1p3/4B1b1/2PP1N2/PP3PPP/R1BQ1RK1 w KQkq - 0 1')
+    # print(b)
+    # # print(count_isolated_pawns(b))
+    # print(b.legal_moves)
+    from os import listdir
+    print([f for f in listdir("./data/aggressive")])
 
 
 if __name__ == "__main__":
