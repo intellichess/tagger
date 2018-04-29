@@ -358,14 +358,9 @@ def read_games(file):
 def process_aggro():
     aggro = pd.DataFrame()
     for f in listdir("./data/aggressive"):
-        # print(read_games("data/aggressive/Morphy.pgn"))
         f = "./data/aggressive/" + str(f)
         aggro = aggro.append(read_games(f))
 
-    # print(aggro.head())
-    # print(aggro.shape)
-    # print(np.mean(aggro["Average Material Threatened"]))
-    # aggro.to_csv("aggressive.csv")
     aggro = aggro[aggro["Average Material Threatened"] != 0]
     return aggro
 
@@ -376,12 +371,26 @@ def process_defen():
         f = "./data/defensive/" + str(f)
         defen = defen.append(read_games(f))
 
-    # print(defen.head())
-    # print(defen.shape)
-    # print(np.mean(defen["Average Material Threatened"]))
-    # defen.to_csv("defensive.csv")
     defen = defen[defen["Average Material Threatened"] != 0]
     return defen
+
+
+def process_fischer():
+    fischer = pd.DataFrame()
+    fischer = fischer.append(read_games("./data/fischer.pgn"))
+    print(read_games("./data/fischer.pgn"))
+    fischer = fischer[fischer["Average Material Threatened"] != 0]
+    return fischer
+
+
+def grab_fischer():
+    f = process_fischer()
+    print("FISCHER:", f.shape)
+    print("Avg Mat Threat", np.mean(f["Average Material Threatened"]))
+    print("Avg Move Count", np.mean(f["Move Count"]))
+    print("Avg Gambit Count", np.mean(f["Gambit Count"]))
+    print("Avg Check Count", np.mean(f["Check Count"]))
+    print("Avg Avg Board Eval", np.mean(f["Average Board Evaluation"]))
 
 
 def update_csvs():
@@ -409,7 +418,7 @@ def update_csvs():
 
 
 def main():
-    update_csvs()
+    """ run update_csvs if you want to get usual process or run grab_fischer for an example """
 
 
 if __name__ == "__main__":
